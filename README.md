@@ -115,7 +115,7 @@ templates/
 
 ## Route module options
 
-authorize
+authorize _Check user and password attempts and trigger actions_
 - `key_username`: A key to search in GET and POST for the username
 - `key_password`: A key to search in GET and POST for the password
 - `user_db`: The (relative) path to the user database, which is a CSV. See `userdb.txt` as an example
@@ -123,17 +123,17 @@ authorize
 - `on_error_placeholder`: If the user cannot login and `on_error` is set to a file: See `servefile.process_placeholders`
 - `on_error_process_templates`: If the user cannot login and `on_error` is set to a file: See `servefile.process_template`
 
-servefile
+servefile _Serve a static file_
 - `file`: Can be a file or array of files. If set to an array of files, a random file will be picked at runtime
 - `process_template`: if the file should be handled like a template (uses Jinja2)
 - `process_placeholders`: if placeholders should be replaced. Placeholders are either `strftime()` date and time placeholder (e. g. `%Y`) or values from the configuration, e. g. `$honeypot.model`. Please note that date time values are prefixed with a `%` while config values are using a `$`
 - `watermark`: Must be a dictionary, containing (x: int, y: int, colors: [r,g,b], text: str). Text can use the same placeholder values as described in `process_placeholders`
 
-sleep
+sleep _Delay actions_
 - `duration`: A float duration on how many seconds should following modules wait to simulate poor hardware performance
 - `randomize`: If set to true, a random offset will be added to the duration value, following the formula: `duration/randint(1,10)`
 
-catchfile
+catchfile _Persists an uploaded file_
 - No further option
 
 
