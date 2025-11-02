@@ -34,9 +34,10 @@ templates/
                   /login.js
                   /login_ok.txt
                   /login_fail.txt
+                  /routes.json
 ```
 
-### Example Routes 
+### Example Routes routes.json
 
 1. The first matched route is executed
 2. Within a route, the actions are executed in the order configured
