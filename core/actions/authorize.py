@@ -119,15 +119,18 @@ def run(_: Flask, __: str, route: Dict, request: Request):
             else:
                 template_path = join(config.ROOT, on_error)
                 if exists(template_path):
-                    
+                    process_placeholder = "on_error_placeholder" in route["authorize"] and route["authorize"]["on_error_placeholder"]
+                    process_template = "on_error_process_template" in route["authorize"] and route["authorize"]["on_error_process_template"]
+                    file = template_path if not process_template else on_error.replace("templates/", "")
+                
                     return serve_file(
                         _,
                         "",
                         {
                             "servefile": {
-                                "process_placeholder":  "on_error_placeholder" in route["authorize"] and route["authorize"]["on_error_placeholder"],
-                                "process_template":  "on_error_process_template" in route["authorize"] and route["authorize"]["on_error_process_template"],
-                                "file": template_path,
+                                "process_placeholder":  process_placeholder,
+                                "process_template":  process_template,
+                                "file": file
                             }
                         },
                         request,
