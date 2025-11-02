@@ -8,8 +8,8 @@
       "duration": 2
     },
     "servefile":{
-      "file": "/ugly/index.html",
-      "render_template": true
+      "file": "templates/ugly/index.html",
+      "process_template": true
     },
     "headers": {
       "Server": "lighttpd",
@@ -25,8 +25,8 @@
       "duration": 2
     },
     "servefile":{
-      "file": "/ugly/index.html",
-      "render_template": true
+      "file": "templates/ugly/index.html",
+      "process_template": true
     },
     "headers": {
       "Server": "lighttpd",
@@ -42,8 +42,8 @@
       "duration": 1
     },
     "servefile":{
-      "file": "/ugly/login.html",
-      "render_template": true
+      "file": "templates/ugly/login.html",
+      "process_template": true
     },
     "headers": {
       "Server": "lighttpd",
@@ -57,15 +57,18 @@
       "servefile"
     ],
     "authorize": {
-      "username": "username",
-      "password": "password"
+      "key_username": "username",
+      "key_password": "password",
+      "on_error": "templates/ugly/wrongpass.html",
+      "user_db": "userdb.txt",
+      "on_error_process_template": true
     },
     "sleep":{
       "duration": 2
     },
     "servefile":{
-      "file": "/ugly/admin.html",
-      "render_template": true
+      "file": "templates/ugly/admin.html",
+      "process_template": true
     },
     "headers": {
       "Server": "lighttpd",
@@ -82,8 +85,8 @@
       "duration": 5
     },
     "servefile":{
-      "file": "/ugly/update.html",
-      "render_template": true
+      "file": "templates/ugly/update.html",
+      "process_template": true
     },
     "headers": {
       "Server": "lighttpd",
@@ -111,10 +114,14 @@
     },
     "servefile":{
       "file": [
-        "templates/ugly/images/0.jpg",
-        "templates/ugly/images/1.jpg"
+        "image.jpg"
       ],
-      "watermark": true
+      "watermark": {
+        "x": 5,
+        "y": 5,
+        "text": "%a, %d %b %Y %H:%M:%S",
+        "color": [255, 255, 255]
+      }
     },
     "headers": {
       "Server": "RTSP-Stream"
