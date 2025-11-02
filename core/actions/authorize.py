@@ -12,6 +12,17 @@ from typing import Dict, List
 
 
 def _is_authorized(username: str, password: str, user_db: str) -> bool:
+    """
+    Search in the user database for a given username password combination
+
+    parameters:
+      username: The user to search for
+      password: The password to serach for
+      user_db: The path to the user database
+    
+    returns:
+      If the "auth" succeeded
+    """
     success = False
     with open(user_db, "r") as file:
         lines = file.readlines()
