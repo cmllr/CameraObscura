@@ -77,7 +77,8 @@ templates/
       "duration": 2
     },
     "servefile": {
-      "file": "templates/mytemplate/login_ok.txt", /* This is the result if the authorize step succeeds */
+      /* This is the result if the authorize step succeeds */
+      "file": "templates/mytemplate/login_ok.txt", 
       "process_template": false
     },
     "authorize": {
@@ -107,6 +108,22 @@ templates/
   },
 }
 ```
+## Honeypot configuration
+
+Copy `configuration.cfg.dist` to `configuration.cfg`.
+
+|Value|Remarks|
+|--|--|
+| `honeypot.{hostname,firmware,serial,model,name,timezone}` |Fake values to inject into templates. Can be extended by own values|
+|`honeypot.sensor`|Sensor name for logs|
+|`honeypot.downloadDir`|The directory where to drop files into. Must be created before usage|
+|`honeypot.debug`|Debug mode. Please keep to `False`|
+|`log.path`|The path to the logfile|
+|`log.timespan`|The duration to wait until rotating the logfile|
+|`log.method`|Either `json` or `stdout`. If set to `stdout`, no logfile will be created|
+|`http.port`|The HTTP port to bind to|
+|`http.host`|The HTTP host to bind to|
+|`http.template`|The template to use. It's a folder name inside of the `/templates` folder|
 
 
 ## (planned) Features
@@ -119,9 +136,8 @@ templates/
   - [x] Semi-Fake Web UI
   - [ ] Clone existing to simulate running vulnerable IP-Cams
 - [ ] Logging
+  - [x] stdout
   - [x] JSON
-  - [x] Log (text)
-  - [ ] SQL
   - [x] Payload dump (e. g. on fake firmware upload or `POST` with `file`)
 - [ ] Fake other services (like RTSP)
   - [ ] RTSP 
