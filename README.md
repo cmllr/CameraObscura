@@ -13,6 +13,102 @@ IP Cameras are often misused for wide range malware campaigns. The purpose of th
 
 > For God's sake, don't deploy this to productive environments. It's an honeypot which also could be exploited.
 
+## How to template 
+
+The honeypot basically serves routes to files with different logic between them.
+
+### Example folder
+
+In this (very unsafe) example, the login form uses a javascript to fetch the API `/api/login` and just checks for the response, if "ok" or "not okay" was returned. Afterwards, the script redirects the user `/admin.html` 
+
+```
+/* 
+Successful login: login.html+login.js -[HTTP POST]-> /api/login -> index.html 
+Failed login: login.html+login.js -[HTTP POST]-> /api/login -> login.html
+*/
+templates/
+        mytemplate/
+                  /index.html
+                  /login.html
+                  /admin.html
+                  /login.js
+                  /login_ok.txt
+                  /login_fail.txt
+```
+
+### Example Routes 
+
+```
+{
+  "": { /* This just serves the index.html and can be extended with a redundant block with a key "index.html" */
+    "actions": [
+      "sleep",
+      "servefile",
+    ],
+    "sleep": {
+      "duration": 2
+    },
+    "servefile": {
+      "file": "templates/mytemplate/index.html", /* Templates are always relative from the root directory */
+      "process_template": true /* If the file should be handled as a Jinja2 template? */
+      "process_placeholders": false /* If placeholders should be replaced */
+    }
+  },
+  "login.html": {
+    "actions": [
+      "sleep",
+      "servefile",
+    ],
+    "sleep": {
+      "duration": 2
+    },
+    "servefile": {
+      "file": "templates/mytemplate/login.html",
+      "process_template": true
+    }
+  },
+  "/api/login": {
+    "actions": [
+      "sleep",
+      "authorize",
+      "servefile",
+    ],
+    "sleep": {
+      "duration": 2
+    },
+    "servefile": {
+      "file": "templates/mytemplate/login_ok.txt", /* This is the result if the authorize step succeeds */
+      "process_template": false
+    },
+    "authorize": {
+      "key_username": "usr", /* The key to search for inside of POST and GET dictionaries */
+      "key_password": "pwd", /* The key to search for inside of POST and GET dictionaries */
+      "user_db": "userdb.txt", /* A CSV containing the wanted username password combinations */
+      /* Can be either: Status Code (int) or String. 
+       * When a string, it's either a template file or a route key to redirect to
+       */
+      "on_error": "templates/mytemplate/login_fail.txt",
+      "on_error_placeholder": true /* If true, placeholders will be replaced in the file output */
+      "on_error_process_template": false /* Is the file to be handled as a template? */
+    },
+  },
+  "admin.html": {
+    "actions": [
+      "sleep",
+      "servefile",
+    ],
+    "sleep": {
+      "duration": 2
+    },
+    "servefile": {
+      "file": "templates/mytemplate/admin.html",
+      "process_template": true
+    }
+  },
+}
+```
+
+
 ## (planned) Features
 
 - [ ] Fake Camera Endpoint (for HTTP `POST`/ `GET` etc.)
