@@ -108,16 +108,41 @@ templates/
   },
 }
 ```
+
+## Route module options
+
+authorize
+- `key_username`: A key to search in GET and POST for the username
+- `key_password`: A key to search in GET and POST for the password
+- `user_db`: The (relative) path to the user database, which is a CSV. See `userdb.txt` as an example
+- `on_error`: What to do on login error. Can be a status code or a string. If set to a string, it can either represent a template path to display or a route key to redirect to.
+- `on_error_placeholder`: If the user cannot login and `on_error` is set to a file: See `servefile.process_placeholders`
+- `on_error_process_templates`: If the user cannot login and `on_error` is set to a file: See `servefile.process_template`
+
+servefile
+- `file`
+- `process_template`: if the file should be handled like a template (uses Jinja2)
+- `process_placeholders`: if placeholders should be replaced. Placeholders are either `strftime()` date and time placeholder (e. g. `%Y`) or values from the configuration, e. g. `$honeypot.model`. Please note that date time values are prefixed with a `%` while config values are using a `$`
+- `watermark`: Must be a dictionary, containing (x: int, y: int, colors: [r,g,b], text: str). Text can use the same placeholder values as described in `process_placeholders`
+
+sleep
+- `duration`: A float duration on how many seconds should following modules wait to simulate poor hardware performance
+- `randomize`: If set to true, a random offset will be added to the duration value, following the formula: `duration/randint(1,10)`
+
+catchfile
+- No further option
+
+
 ## Honeypot configuration
 
 Copy `configuration.cfg.dist` to `configuration.cfg`.
 
-|Value|Remarks|
+|Section and Key|Remarks|
 |--|--|
 | `honeypot.{hostname,firmware,serial,model,name,timezone}` |Fake values to inject into templates. Can be extended by own values|
 |`honeypot.sensor`|Sensor name for logs|
 |`honeypot.downloadDir`|The directory where to drop files into. Must be created before usage|
-|`honeypot.debug`|Debug mode. Please keep to `False`|
+|`honeypot.debug`|Debug mode. Please keep to `false`|
 |`log.path`|The path to the logfile|
 |`log.timespan`|The duration to wait until rotating the logfile|
 |`log.method`|Either `json` or `stdout`. If set to `stdout`, no logfile will be created|
