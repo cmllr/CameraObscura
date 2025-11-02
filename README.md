@@ -38,6 +38,9 @@ templates/
 
 ### Example Routes 
 
+1. The first matched route is executed
+2. Within a route, the actions are executed in the order configured
+
 ```
 {
   "": { /* This just serves the index.html and can be extended with a redundant block with a key "index.html" */
@@ -120,7 +123,7 @@ authorize
 - `on_error_process_templates`: If the user cannot login and `on_error` is set to a file: See `servefile.process_template`
 
 servefile
-- `file`
+- `file`: Can be a file or array of files. If set to an array of files, a random file will be picked at runtime
 - `process_template`: if the file should be handled like a template (uses Jinja2)
 - `process_placeholders`: if placeholders should be replaced. Placeholders are either `strftime()` date and time placeholder (e. g. `%Y`) or values from the configuration, e. g. `$honeypot.model`. Please note that date time values are prefixed with a `%` while config values are using a `$`
 - `watermark`: Must be a dictionary, containing (x: int, y: int, colors: [r,g,b], text: str). Text can use the same placeholder values as described in `process_placeholders`
