@@ -6,9 +6,31 @@ This module contains any logic to parse the config file
 """
 import configparser
 from os.path import dirname, abspath, join
+from typing import Dict, List
 
 CONFIG = None
 ROOT = dirname(dirname(abspath(__file__)))
+
+def are_route_config_values_existing(haystack: Dict, needles: List) -> bool:
+    """
+    Helper function to check if there are keys in a dictionary missing, e. g. for route values
+
+    parameters:
+        haystack: An flat dictionary containing the key value pairs to check
+        needles: The keys to search for
+
+    returns:
+        If haystack is None, False is returned
+        If one of the keys is missing, False is returned
+        If all keys were found, True is returned
+    """
+    if haystack is None:
+        return False
+    for needle in needles:
+        if needle not in haystack:
+            return False
+    
+    return True
 
 
 def getConfiguration(cfgfile: str) -> object:
