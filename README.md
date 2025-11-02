@@ -1,5 +1,12 @@
 Camera**Obscura** - IP Cam Honeypot
 
+
+<a>
+<img src="image.jpg" height="256" width="380" >
+</a>
+
+
+
 IP Cameras are often misused for wide range malware campaigns. The purpose of this project is to fake a IP Camera with the common features, such as camera stream, login or firmware upload to protocolize actions done by botnets.
 
 > This project is currently under development. Most of the features are not implemented yet.
@@ -45,5 +52,7 @@ Python3
 - It's still in development :)
 
 ## License
+
+Image: https://commons.wikimedia.org/wiki/Category:Camera_obscura#/media/File:001_a01_camera_obscura_abrazolas.jpg, Public Domain
 
 MPL-2.0
