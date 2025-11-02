@@ -172,7 +172,7 @@ def run(_: Flask, route_key: str, route: Dict, request: Request):
         and route["servefile"]["process_template"]
     )
     if process_template:
-        get_values = http.getString(request)
+        get_values = http.get_string(request)
         return render_template(
             file.replace("templates/", ""), # JInja2 expects the file already being in "templates"
             config=config,

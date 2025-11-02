@@ -7,40 +7,47 @@ This module http related functionality
 
 
 from datetime import datetime
-from os.path import join, isfile, isdir, isabs
+from os.path import join, isfile, isdir, isabs, exists
 import re
 from jsonpickle import decode
-from flask import Flask, request, abort, render_template
+from flask import Flask, request, abort, render_template, Response, Request
+from werkzeug.exceptions import HTTPException
 from core import config, logging, actions
 from core.actions import *
 from pathlib import Path
-import urllib
+from urllib import parse
+from typing import Dict, Tuple
 
-app = Flask(__name__, template_folder=join(config.ROOT, 'templates'))
+app = Flask(__name__, template_folder=join(config.ROOT, "templates"))
 app.config["CACHE_TYPE"] = "null"
 app.url_map.strict_slashes = False
 ROUTES = None
-ROOT = ""
 LASTROUTE = None
 
 
-def parseRoutes(file: str) -> object:
+def parse_routes(file: str) -> Dict:
     """
     parses the JSON routes file.
+
+    parameters:
+        file: The file path to the routes.json file
+
+    returns:
+        The parsed routes.json
+        Throws exception in case of file not found
     """
     content = ""
     try:
-        with open(file, 'r') as f:
+        with open(file, "r") as f:
             content = f.read()
     except FileNotFoundError as e:
         print(e)
 
     obj = decode(content)
-    return obj
-
+    return obj  # type: ignore
 
 @app.after_request
-def add_header(response):
+def add_header(response: Response):
     """
     Adds a header if the configured routes has some
     """
@@ -51,79 +58,112 @@ def add_header(response):
                 response.headers[key] = value
     return response
 
-
-@app.errorhandler(404)
-def page_not_found(e):
+@app.errorhandler(404)  # type: ignore
+@app.errorhandler(403)  # type: ignore
+def error_handler(e: HTTPException):
     """
-    Render the 404 error
+    Render the 403 and 403 errors
+
+    parameters:
+        e the HTTPException
+
+    returns:
+        Render template. If template/<name>/404.html or template/<name>/403.html exists, these files are used.
     """
-    return render_template('404.html'), 404
+    code = e.code
+    template = config.get_configuration_value("http", "template")
+    if template is None:
+        raise Exception("No template configured")
+    template_path = join(str(template), f"{code}.html")
+    full_template_path = join(config.ROOT, "templates", template_path)
+    print(full_template_path)
+    if not exists(full_template_path):
+        template_path = f"{code}.html"
+    return render_template(template_path), code
 
-
-@app.errorhandler(403)
-def forbidden(e):
+def _get_route(
+    routes: Dict, path: str, request: Request
+) -> Tuple[str, Dict ]:
     """
-    Render the 403 error
+    From the given routes, find the matching route. When searching, the query string will be appended to look into the route.json keys.
+
+    parameters:
+        route: The routes to search in
+        path: The path, as seen as the injected variable in handle_route (leading "/" will be omitted then)
+        request: The flask request object
+    
+    returns:
+        Either the selected route or, if no route matches and the root is wanted, the root route ("" key in routes.json)
     """
-    return render_template('403.html'), 403
+    selected_route: Dict | None = None
+    selected_path: str | None = None
+    for value in routes:
+        needle = path + get_string(request)
+        if path and path[0] != "." and value != "" and re.match(value, needle):
+            selected_route = routes[value]
+            selected_path = value
+            break
 
+    if selected_route is None and path == "":
+        selected_route = routes[""]
+        selected_path = ""
 
-@app.route('/', defaults={'path': ''}, methods=['POST', 'GET'])
-@app.route('/<path:path>', methods=['POST', 'GET'])
-def handleRoute(path):
+    return (selected_path, selected_route) # type: ignore
+
+def _log_wrapper(id: str, message: str, request: Request, is_error: bool) -> bool:
+    """
+    Logs generic messages into the logfile
+
+    parameters:
+        id: The identifier for the message. See logging module for details.
+        message: The message to log
+        request: The flask request object
+        is_eror: If the request is considered causing a response > 200
+        
+    """
+    remote_addr = str(request.remote_addr)
+    user_agent = request.headers.get("User-Agent")
+    get_string = request.args
+    post_string = request.form
+    return logging.log(
+        id,
+        datetime.now(),
+        message,
+        is_error,
+        remote_addr,
+        useragent=user_agent,
+        get=get_string,
+        post=post_string,
+    )
+
+@app.route("/", defaults={"path": ""}, methods=["POST", "GET", "PUT", "DELETE"]) # type: ignore
+@app.route("/<path:path>", methods=["POST", "GET", "PUT", "DELETE"]) # type: ignore
+def handle_route(path):
     """
     Tries to execute a given route based on the path
+    If no route matches. The root route ("") will be used.
     """
     global ROUTES
     global LASTROUTE
-    get = request.args
-    query_string = request.query_string.decode("utf-8")
+    global_request: Request = request
+    
+    selected_path, selected_route = _get_route(ROUTES, path, request) # type: ignore
 
-    # if the query_string is an %-encoded query string (contains %3) -> Reparse the string to get the dictionary
-    # Flask seems not to unquote them and puts the complete query string as a key into the request.args dictionary, which is hard to log
-    if "%3" in query_string:
-        unquoted = urllib.parse.unquote(query_string)
-        get = unquoted
-
-    post = request.form
-    userAgent = request.headers.get('User-Agent')
-    target = request.url
-
-    logMessage = "{0} {1}".format(
-        request.method, target, get, post, userAgent)
-
-    selectedRoute = None
-    selectedPath = None
-    for value in ROUTES:
-        needle = path + getString(request)
-        unquoted_needle = urllib.parse.unquote(needle)
-        if path and path[0] != "." and value != "" and re.match(
-                value, needle):
-            selectedRoute = ROUTES[value]
-            selectedPath = value
-            break
-
-    if selectedRoute is None and path == "":
-        selectedRoute = ROUTES[""]
-        selectedPath = ""
-
-    if selectedRoute is not None:
-        logging.log(logging.EVENT_ID_HTTP_REQUEST, datetime.now(), logMessage, False, request.remote_addr, useragent=userAgent, get=unquoted_needle, post=post)
-        route = selectedRoute
-        LASTROUTE = route
-        for action in route["actions"]:
-            result = actions.run(action, app, selectedPath,
-                                 route, request)
-            if isinstance(result, bool) and result is False:
-                abort(403)
-            elif result is not None and isinstance(result, bool) is False:
-                return result
-    else:
-        logging.log(logging.EVENT_ID_HTTP_REQUEST, datetime.now(), logMessage, True, request.remote_addr, useragent=userAgent, get=unquoted_needle, post=post)
-        abort(404)
-
-
-def getString(requestObj) -> str:
+    _log_wrapper(
+        logging.EVENT_ID_HTTP_REQUEST,
+        "{0} {1}".format(request.method, global_request.url),
+        global_request,
+        selected_route is None,
+    )
+    if selected_route is None:
+        return abort(404)
+    LASTROUTE = selected_route
+    for action in selected_route["actions"]:
+        result = actions.run(action, app, selected_path, selected_route, global_request)
+        if result is not None and isinstance(result, bool) is False:
+            return result
+        
+def get_string(requestObj) -> str:
     """
     Returns the HTTP GET string out of the given request
     """
@@ -133,35 +173,20 @@ def getString(requestObj) -> str:
         return result
     return "?" + get
 
-
-def serve(path: str):
+def serve():
     """
     Start the server
-    @param path is the base path of the software
     """
     global ROUTES
-    global ROOT
-    ROOT = path
     template = config.get_configuration_value("http", "template")
     if template is None:
         raise Exception("No template is configured")
-    routesFiles = join(config.ROOT, "templates", template, "routes.json")
-    if isfile(routesFiles) is False:
-        raise FileNotFoundError("Routes configuration was not found")
 
-    downloadDir = config.get_configuration_value("honeypot", "downloadDir")
+    routesFiles = join(config.ROOT, "templates", str(template), "routes.json")
+    ROUTES = parse_routes(routesFiles)
 
-    # if the download dir is not absolute, create a proper absolute path to avoid cwd issues
-    if not isabs(downloadDir):
-        downloadDir = join(config.ROOT, downloadDir)
-
-    if not isdir(downloadDir):
-        Path(downloadDir).mkdir(parents=True, exist_ok=True)
-        logging.log(logging.EVENT_ID_DOWNLOAD_FOLDER_CREATE, datetime.now(), "Created download folder", not isdir(downloadDir), None)
-
-    ROUTES = parseRoutes(routesFiles)
     app.run(
         debug=config.get_configuration_value("honeypot", "debug"),
-        host=config.get_configuration_value("http", "host"),
-        port=int(config.get_configuration_value("http", "port"))
+        host=str(config.get_configuration_value("http", "host")),
+        port=int(str(config.get_configuration_value("http", "port"))),
     )

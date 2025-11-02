@@ -11,4 +11,4 @@ from core import http, config
 if isfile(join(config.ROOT, "configuration.cfg")) is False:
     raise Exception("configuration.cfg is missing")
 else:
-    http.serve(__file__)
+    http.serve()
