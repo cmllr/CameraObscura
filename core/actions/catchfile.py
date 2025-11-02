@@ -53,12 +53,11 @@ def run(_: Flask, __: str, ___: Dict, request_obj: Request):
 
         report_content += f"Filename: {file_object.filename}\n" + f"Stored filename: {filename}\n"+  f"Size: {file_object.content_length}\n" + f"Type: {file_object.content_type}\n" + "\n"
         
-        logging.log(
+        logging.log_wrapper(
             logging.EVENT_ID_UPLOAD,
-            datetime.now(),
-            f"Uploaded file with report {report_filename}",
-            not isfile(file_path),
-            str(request_obj.remote_addr),
+            f"Uploaded file {file_object.filename}",
+            request_obj,
+            False
         )
     # only write a report if there were files
     if report_filename is not None:

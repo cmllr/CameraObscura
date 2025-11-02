@@ -16,20 +16,13 @@ __all__ = [
 ]
 
 
-def isAllowed(action: str):
+def is_action_present(action: str):
     return action in __all__
 
 
 def run(action, app, path, route, request):
-    if isAllowed(action) == False:
-        logging.log(
-            logging.EVENT_ID_ACTION_NOT_FOUND,
-            datetime.now(),
-            "Action not found {0}".format(action),
-            True,
-            request.remote_addr,)
-        return None
-    modules = globals()
-    if action in modules:
-        return modules[action].run(app, path, route, request)
+    if is_action_present(action):
+        modules = globals()
+        if action in modules:
+            return modules[action].run(app, path, route, request)
     return None

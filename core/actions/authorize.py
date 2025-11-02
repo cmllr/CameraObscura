@@ -101,16 +101,12 @@ def run(_: Flask, __: str, route: Dict, request: Request):
         is_authorized = _is_authorized(
             username, password, route["authorize"]["user_db"]
         )
-        logging.log(
-            logging.EVENT_ID_LOGIN,
-            datetime.now(),
-            "Login attempt [{0}/{1}] {2}".format(
-                username, password, "failed" if not is_authorized else "succeeded"
-            ),
-            False,
-            str(request.remote_addr),
-            username=username,
-            password=password,
+
+        logging.log_wrapper(
+          logging.EVENT_ID_LOGIN_SUCCESS if is_authorized else logging.EVENT_ID_LOGIN_FAILED,
+          f"Login attempt \"{username}\":\"{password}\"",
+          request,
+          not is_authorized
         )
         if not is_authorized:
             if "on_error" not in route["authorize"]:

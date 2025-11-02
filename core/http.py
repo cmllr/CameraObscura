@@ -14,6 +14,7 @@ from flask import Flask, request, abort, render_template, Response, Request
 from werkzeug.exceptions import HTTPException
 from core import config, logging, actions
 from core.actions import *
+from core.logging import log_wrapper
 from pathlib import Path
 from urllib import parse
 from typing import Dict, Tuple
@@ -110,32 +111,6 @@ def _get_route(
 
     return (selected_path, selected_route) # type: ignore
 
-def _log_wrapper(id: str, message: str, request: Request, is_error: bool) -> bool:
-    """
-    Logs generic messages into the logfile
-
-    parameters:
-        id: The identifier for the message. See logging module for details.
-        message: The message to log
-        request: The flask request object
-        is_eror: If the request is considered causing a response > 200
-        
-    """
-    remote_addr = str(request.remote_addr)
-    user_agent = request.headers.get("User-Agent")
-    get_string = request.args
-    post_string = request.form
-    return logging.log(
-        id,
-        datetime.now(),
-        message,
-        is_error,
-        remote_addr,
-        useragent=user_agent,
-        get=get_string,
-        post=post_string,
-    )
-
 @app.route("/", defaults={"path": ""}, methods=["POST", "GET", "PUT", "DELETE"]) # type: ignore
 @app.route("/<path:path>", methods=["POST", "GET", "PUT", "DELETE"]) # type: ignore
 def handle_route(path):
@@ -149,7 +124,7 @@ def handle_route(path):
     
     selected_path, selected_route = _get_route(ROUTES, path, request) # type: ignore
 
-    _log_wrapper(
+    log_wrapper(
         logging.EVENT_ID_HTTP_REQUEST,
         "{0} {1}".format(request.method, global_request.url),
         global_request,
@@ -184,9 +159,15 @@ def serve():
 
     routesFiles = join(config.ROOT, "templates", str(template), "routes.json")
     ROUTES = parse_routes(routesFiles)
-
+    log_wrapper(
+        logging.EVENT_ID_STARTED,
+        f"Honeypot started",
+        None,
+        False
+    )
     app.run(
         debug=config.get_configuration_value("honeypot", "debug"),
         host=str(config.get_configuration_value("http", "host")),
         port=int(str(config.get_configuration_value("http", "port"))),
     )
+
