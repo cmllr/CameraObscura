@@ -54,10 +54,10 @@ def log(eventId: str, timestamp: datetime, message: str,
     """
     Logs an event
     """
-    sensor = config.getConfigurationValue("honeypot", "sensor")
+    sensor = config.get_configuration_value("honeypot", "sensor")
     entry = LogEntry(eventId, timestamp, message,
                      isError, src_ip, sensor, **kwargs)
-    selectedLogMethod = config.getConfigurationValue("log", "method")
+    selectedLogMethod = config.get_configuration_value("log", "method")
     # allow only whitelisted method calls
     if selectedLogMethod is not None and selectedLogMethod in [
             "json", "stdout", "text"]:
@@ -89,14 +89,14 @@ def getRotatedLogFilename() -> str:
     """
     gets the rotated filename, e. g. obscura.log.1
     """
-    path = config.getConfigurationValue("log", "path")
+    path = config.get_configuration_value("log", "path")
     completePath = getLogPath(path)
     now = int(time.time())
     if isfile(completePath):
         modification = int(stat(completePath).st_mtime)
     else:
         modification = now - 1  # to trigger creation
-    timespan = int(config.getConfigurationValue("log", "timespan"))
+    timespan = int(config.get_configuration_value("log", "timespan"))
     if modification + timespan < now:
         files = ([name for name in listdir('.')
                   if isfile(name) and path in name])

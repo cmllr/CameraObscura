@@ -142,14 +142,14 @@ def serve(path: str):
     global ROUTES
     global ROOT
     ROOT = path
-    template = config.getConfigurationValue("http", "template")
+    template = config.get_configuration_value("http", "template")
     if template is None:
         raise Exception("No template is configured")
     routesFiles = join(config.ROOT, "templates", template, "routes.json")
     if isfile(routesFiles) is False:
         raise FileNotFoundError("Routes configuration was not found")
 
-    downloadDir = config.getConfigurationValue("honeypot", "downloadDir")
+    downloadDir = config.get_configuration_value("honeypot", "downloadDir")
 
     # if the download dir is not absolute, create a proper absolute path to avoid cwd issues
     if not isabs(downloadDir):
@@ -161,7 +161,7 @@ def serve(path: str):
 
     ROUTES = parseRoutes(routesFiles)
     app.run(
-        debug=config.getConfigurationValue("honeypot", "debug"),
-        host=config.getConfigurationValue("http", "host"),
-        port=int(config.getConfigurationValue("http", "port"))
+        debug=config.get_configuration_value("honeypot", "debug"),
+        host=config.get_configuration_value("http", "host"),
+        port=int(config.get_configuration_value("http", "port"))
     )

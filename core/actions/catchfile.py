@@ -34,7 +34,7 @@ def run(_: Flask, __: str, ___: Dict, request_obj: Request):
             return abort(404)
         filename = f"{request_obj.__hash__()}_{key}"
         
-        download_dir = config.getConfigurationValue("honeypot", "downloadDir")
+        download_dir = config.get_configuration_value("honeypot", "downloadDir")
 
         if not download_dir:
             return abort(404)

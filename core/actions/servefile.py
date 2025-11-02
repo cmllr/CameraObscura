@@ -45,7 +45,7 @@ def _replace_placeholders(text: str) -> str:
             # Format must be $honeypot.setting_name
             if "." in name:
                 parts = name.split(".")
-                value = config.getConfigurationValue(parts[0], parts[1])
+                value = config.get_configuration_value(parts[0], parts[1])
                 if type(value) == str:
                     text = text.replace(match, value)
     return text
