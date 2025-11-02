@@ -12,7 +12,6 @@ __all__ = [
     'authorize',
     'catchfile',
     'servefile',
-    'text',
     'sleep'
 ]
 
