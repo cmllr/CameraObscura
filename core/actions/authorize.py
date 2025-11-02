@@ -8,7 +8,9 @@ from datetime import datetime
 from urllib import parse
 from flask import Flask, request, Request, abort, redirect
 from core import logging, config
+from core.actions.servefile import run as serve_file
 from typing import Dict, List
+from os.path import exists, join
 
 
 def _is_authorized(username: str, password: str, user_db: str) -> bool:
@@ -19,7 +21,7 @@ def _is_authorized(username: str, password: str, user_db: str) -> bool:
       username: The user to search for
       password: The password to serach for
       user_db: The path to the user database
-    
+
     returns:
       If the "auth" succeeded
     """
@@ -41,16 +43,18 @@ def run(_: Flask, __: str, route: Dict, request: Request):
     Attempt to authorize a user. On error, the user is either shown a status code or been redirected already.
 
     On success, the module just let the next module execute
-    
+
     parameters:
       route: The route dictionary
       request: The Flask route
-    
+
     route object:
       key_username: The key to search in POST and GET for the username
       key_password: The key to search in POST and GET for the password
       user_db: The userdb to use. The default userdb.txt can be used. It's an CSV file. Please do not use ";" in usernames
-      on_error: Either an status code or route key to redirect to
+      on_error: Either an status code or route key to redirect or a template
+      on_error_placeholder: If on_error is a template path, decide if placeholders shall be processed
+      on_error_process_template: If on_error is a template path, decide if the file shall be handled as a template
     """
     if "authorize" not in route:
         raise Exception("Authorize action options missing")
@@ -84,6 +88,11 @@ def run(_: Flask, __: str, route: Dict, request: Request):
 
         if username is not None and password is not None:
             break
+    # handling for some weird IPCAm themes
+    if isinstance(username, list):
+        username = username[0]
+    if isinstance(password, list):
+        password = password[0]
 
     if username and password:
         if "user_db" not in route["authorize"]:
@@ -92,21 +101,41 @@ def run(_: Flask, __: str, route: Dict, request: Request):
         is_authorized = _is_authorized(
             username, password, route["authorize"]["user_db"]
         )
-        logging.log(logging.EVENT_ID_LOGIN,
-                  datetime.now(),
-                  "Login attempt [{0}/{1}] {2}".format(username, password, "failed" if not is_authorized else "succeeded"),
-                  False,
-                  str(request.remote_addr),
-                  username=username, password=password)
-        
+        logging.log(
+            logging.EVENT_ID_LOGIN,
+            datetime.now(),
+            "Login attempt [{0}/{1}] {2}".format(
+                username, password, "failed" if not is_authorized else "succeeded"
+            ),
+            False,
+            str(request.remote_addr),
+            username=username,
+            password=password,
+        )
         if not is_authorized:
-          if "on_error" not in route["authorize"]:
-              return abort(403)
-          on_error = route["authorize"]["on_error"]
+            if "on_error" not in route["authorize"]:
+                return abort(403)
+            on_error = route["authorize"]["on_error"]
 
-          if isinstance(on_error, int):
-            # an return code is wanted
-            return abort(on_error)
-          else:
-            # a route redirect is wanted
-            return redirect(on_error)
+            if isinstance(on_error, int):
+                # an return code is wanted
+                return abort(on_error)
+            else:
+                template_path = join(config.ROOT, on_error)
+                if exists(template_path):
+                    
+                    return serve_file(
+                        _,
+                        "",
+                        {
+                            "servefile": {
+                                "process_placeholder":  "on_error_placeholder" in route["authorize"] and route["authorize"]["on_error_placeholder"],
+                                "process_template":  "on_error_process_template" in route["authorize"] and route["authorize"]["on_error_process_template"],
+                                "file": template_path,
+                            }
+                        },
+                        request,
+                    )
+                else:
+                    # a route redirect is wanted
+                    return redirect(on_error)

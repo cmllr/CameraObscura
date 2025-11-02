@@ -36,7 +36,6 @@ def _replace_placeholders(text: str) -> str:
         return ""
     # first go: Replace date and time placeholders.
     text = strftime(text)
-
     # second go: Replace internal placeholders
     placeholder_matches = re.findall(r"(\$[a-z\.]+)", text)
     if placeholder_matches is not None:
@@ -168,7 +167,6 @@ def run(_: Flask, route_key: str, route: Dict, request: Request):
             return abort(404)
     
     file_to_serve = join(config.ROOT, file)
-
     process_template = (
         "process_template" in route["servefile"]
         and route["servefile"]["process_template"]
@@ -176,7 +174,7 @@ def run(_: Flask, route_key: str, route: Dict, request: Request):
     if process_template:
         get_values = http.getString(request)
         return render_template(
-            route["servefile"]["file"],
+            file.replace("templates/", ""), # JInja2 expects the file already being in "templates"
             config=config,
             getValues=get_values,
             ip=request.remote_addr,
