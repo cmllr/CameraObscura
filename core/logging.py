@@ -172,6 +172,8 @@ def _get_ip(request: Request) -> str:
     debug = bool(str(config.get_configuration_value("honeypot", "debug")))
     if not debug:
         return str(request.remote_addr)
+    
+    # Use a random, standing IP to reuse for debug purposes
     global GLOBAL_RANDOM_IP_DEBUG_ONLY
     if GLOBAL_RANDOM_IP_DEBUG_ONLY is None:
         ip =  f"{randint(0,255)}.{randint(0,255)}.{randint(0,255)}.{randint(0,255)}"

@@ -151,7 +151,7 @@ Copy `configuration.cfg.dist` to `configuration.cfg`.
 |`log.timespan`|The duration to wait until rotating the logfile|
 |`log.stdout`|If data should be logged into stdout aswell|
 |`webhook.target`|The target URL of a single webhook to execute|
-|`webhook.flavour`|The webhook module to execute|
+|`webhook.flavour`|The webhook module to execute. Can be: `core.webhooks.discord.Discord`|
 |`webhook.exclude`|Log messages to execute, commma separated list of event Id's (taken from logging.py)|
 |`http.port`|The HTTP port to bind to|
 |`http.host`|The HTTP host to bind to|
