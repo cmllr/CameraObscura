@@ -4,7 +4,7 @@
 """
 This module contains logging functionality
 """
-
+from __future__ import annotations
 import time
 from datetime import datetime
 from os import listdir, stat
@@ -13,6 +13,9 @@ from shutil import move
 from jsonpickle import encode
 from core import config
 from flask import Request
+from abc import abstractmethod
+import importlib
+from random import randint
 
 EVENT_ID_STARTED = "obscura.sensor.started"
 EVENT_ID_HTTP_REQUEST = "obscura.http.request"
@@ -20,6 +23,7 @@ EVENT_ID_LOGIN_SUCCESS = "obscura.http.login_success"
 EVENT_ID_LOGIN_FAILED = "obscura.http.login_failed"
 EVENT_ID_UPLOAD = "obscura.http.upload"
 
+GLOBAL_RANDOM_IP_DEBUG_ONLY = None # Debug mode: Use a random ip 
 
 class LogEntry:
     def __init__(
@@ -63,24 +67,25 @@ def log(
     """
     sensor = str(config.get_configuration_value("honeypot", "sensor"))
     entry = LogEntry(eventId, timestamp, message, isError, src_ip, sensor, **kwargs)
-    selectedLogMethod = config.get_configuration_value("log", "method")
-    # allow only whitelisted method calls
-    if selectedLogMethod is not None and selectedLogMethod in ["json", "stdout"]:
-        return globals()[selectedLogMethod](entry)
 
+    do_stdout = bool(str(config.get_configuration_value("honeypot", "stdout")))
+    if do_stdout:
+        print(entry)
+    
+    json(entry)
+    webhook_target = config.get_configuration_value("webhook", "target")
+    if webhook_target:
+        # check if event is excluded
+        flavour = str(config.get_configuration_value("webhook", "flavour"))
+        got = import_from(flavour, str(webhook_target))
+        ignored_event_ids_raw = config.get_configuration_value("webhook", "exclude")
+        
+        ignored_event_ids = ignored_event_ids_raw.split(",") if ignored_event_ids_raw is not None  else [] # type: ignore
+
+        if entry.eventId not in ignored_event_ids:
+            got.do(entry)
     return False
 
-
-def stdout(entry: LogEntry) -> bool:
-    """
-    Protocol entry log into stdout
-    parameters
-        entry: the log entry to protocol
-    returns
-        Operation success
-    """
-    print(entry)
-    return True
 
 def json(entry: LogEntry) -> bool:
     """
@@ -156,6 +161,23 @@ def get_log_filename() -> str:
         move(absolute_path, absolute_path + "." + str(suffix))
     return absolute_path
 
+def _get_ip(request: Request) -> str:
+    """
+    Get the client ip
+
+    parameters:
+        request: The original request to receive remote_addr from.
+        Attention: if honeypot.debug is configured, a random address will be used instead.
+    """
+    debug = bool(str(config.get_configuration_value("honeypot", "debug")))
+    if not debug:
+        return str(request.remote_addr)
+    global GLOBAL_RANDOM_IP_DEBUG_ONLY
+    if GLOBAL_RANDOM_IP_DEBUG_ONLY is None:
+        ip =  f"{randint(0,255)}.{randint(0,255)}.{randint(0,255)}.{randint(0,255)}"
+        GLOBAL_RANDOM_IP_DEBUG_ONLY = ip
+    return GLOBAL_RANDOM_IP_DEBUG_ONLY
+
 def log_wrapper(id: str, message: str, request: Request | None, is_error: bool) -> bool:
     """
     Logs generic messages into the logfile
@@ -168,8 +190,9 @@ def log_wrapper(id: str, message: str, request: Request | None, is_error: bool) 
     returns:
         Bool if the entry was logged
     """
+
     if request:
-        remote_addr = str(request.remote_addr)
+         
         user_agent = request.headers.get("User-Agent")
         get_string = request.args
         post_string = request.form
@@ -178,7 +201,7 @@ def log_wrapper(id: str, message: str, request: Request | None, is_error: bool) 
             datetime.now(),
             message,
             is_error,
-            remote_addr,
+            _get_ip(request),
             useragent=user_agent,
             get=get_string,
             post=post_string,
@@ -194,3 +217,21 @@ def log_wrapper(id: str, message: str, request: Request | None, is_error: bool) 
             get={},
             post={},
         )
+
+
+
+class Webhook():
+    def __init__(self, target) -> None:
+        self._target = target
+    @abstractmethod
+    def do(self, entry: LogEntry):
+        pass
+
+
+
+
+def import_from(module_name: str, target: str) -> Webhook:
+    module_name, class_name = module_name.rsplit(".", 1)
+    _class = getattr(importlib.import_module(module_name), class_name)
+    instance = _class(target)
+    return instance

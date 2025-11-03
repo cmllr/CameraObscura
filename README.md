@@ -146,10 +146,13 @@ Copy `configuration.cfg.dist` to `configuration.cfg`.
 | `honeypot.{hostname,firmware,serial,model,name,timezone}` |Fake values to inject into templates. Can be extended by own values|
 |`honeypot.sensor`|Sensor name for logs|
 |`honeypot.downloadDir`|The directory where to drop files into. Must be created before usage|
-|`honeypot.debug`|Debug mode. Please keep to `false`|
+|`honeypot.debug`|Debug mode. Please keep to `false`. The debug mode will randomize IP addresses for testing purposes.|
 |`log.path`|The path to the logfile|
 |`log.timespan`|The duration to wait until rotating the logfile|
-|`log.method`|Either `json` or `stdout`. If set to `stdout`, no logfile will be created|
+|`log.stdout`|If data should be logged into stdout aswell|
+|`webhook.target`|The target URL of a single webhook to execute|
+|`webhook.flavour`|The webhook module to execute|
+|`webhook.exclude`|Log messages to execute, commma separated list of event Id's (taken from logging.py)|
 |`http.port`|The HTTP port to bind to|
 |`http.host`|The HTTP host to bind to|
 |`http.template`|The template to use. It's a folder name inside of the `/templates` folder|
@@ -168,6 +171,8 @@ Copy `configuration.cfg.dist` to `configuration.cfg`.
   - [x] stdout
   - [x] JSON
   - [x] Payload dump (e. g. on fake firmware upload or `POST` with `file`)
+- [ ] Webhook
+  - [x] Discord
 - [ ] Fake other services (like RTSP)
   - [ ] RTSP 
   - [ ] SSH/ Telnet (using cowrie)
