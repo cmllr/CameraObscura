@@ -28,7 +28,7 @@ class Discord(Webhook):
                         field_data = [
                             {
                                 "name": f"API returned error",
-                                "value": f"Something went wrong",
+                                "value": f"Something went wrong. Status Code was {got.status_code}",
                             }
                         ]
                     else:
@@ -52,12 +52,6 @@ class Discord(Webhook):
                                     "name": "IN DEBUG MODE"
                                 }
                             )
-                        field_data.append(
-                            {
-                                "value": entry.message,
-                                "name": "Message"
-                            }
-                        )
                         for key, value in field_keys.items():
                             field_data.append(
                                 {"name": key, "value": f"{api_response[value]}"}
@@ -66,7 +60,7 @@ class Discord(Webhook):
             data["embeds"].append(
                 {
                     "title": entry.eventId,
-                    "description": f"{entry.timestamp}",
+                    "description": f"{entry.message}",
                     "color": 888164 if not entry.isError else 9243963,
                     "fields": field_data,  # type: ignore
                 }
