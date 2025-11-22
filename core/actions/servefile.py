@@ -14,41 +14,8 @@ from flask import Flask, request, send_file, render_template, Request, abort
 from core import config, http
 from PIL import ImageDraw, Image
 from typing import Dict
-from time import strftime
+from core.util import replace_placeholders
 
-
-def _replace_placeholders(text: str) -> str:
-    """
-    Replace placeholders from the given text.
-
-    Placeholders are hereby two set of replacements:
-        - strftime() format placeholders for date and time - These are prefixed with a % symbol
-        - placeholders of this project - These are prefixed with a $ symbol and represent configuration.cfg values. Therefore they follow the format $section.setting
-
-    parameters:
-        text: The text containing the Python date time variables, see the params fro strftime() for details
-
-    returns:
-        A string with the replaced values
-        If the text is none an empty string is returned
-    """
-    if text is None:
-        return ""
-    # first go: Replace date and time placeholders.
-    text = strftime(text)
-    # second go: Replace internal placeholders
-    placeholder_matches = re.findall(r"(\$[a-z\.]+)", text)
-    if placeholder_matches is not None:
-        for match in placeholder_matches:
-            name = match.replace("$", "")
-
-            # Format must be $honeypot.setting_name
-            if "." in name:
-                parts = name.split(".")
-                value = config.get_configuration_value(parts[0], parts[1])
-                if type(value) == str:
-                    text = text.replace(match, value)
-    return text
 
 def _apply_watermark(watermark_obj: Dict, file_path: str) -> str:
     """
@@ -89,7 +56,7 @@ def _apply_watermark(watermark_obj: Dict, file_path: str) -> str:
     new_file_path = join(path.parent.absolute(), new_file_name)
 
     # Add the required text, maybe with date time placeholders
-    text = _replace_placeholders(text)
+    text = replace_placeholders(text)
 
     with Image.open(file_path) as im:
         draw = ImageDraw.Draw(im)
@@ -188,7 +155,7 @@ def run(_: Flask, route_key: str, route: Dict, request: Request):
         content = ""
         with open(file_to_serve, "r") as handle:
             content = handle.read()
-            content = _replace_placeholders(content)
+            content = replace_placeholders(content)
         return content
 
     watermark = "watermark" in route["servefile"]

@@ -12,7 +12,8 @@ __all__ = [
     'authorize',
     'catchfile',
     'servefile',
-    'sleep'
+    'sleep',
+    'video'
 ]
 
 

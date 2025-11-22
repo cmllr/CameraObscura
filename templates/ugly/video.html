@@ -1,0 +1,37 @@
+<html>
+
+<head>
+  <title>{{ config.get_configuration_value("honeypot","name") }}</title>
+  <script src="jquery.min.js"></script>
+</head>
+
+<body style="background-color:grey; text-align:center">
+  <h2>{{ config.get_configuration_value("honeypot","name") }}</h2>
+  <a href="/login.php">login</a>
+  <br>
+
+  <link href="https://unpkg.com/video.js/dist/video-js.css" rel="stylesheet">
+  <script src="https://unpkg.com/video.js/dist/video.js"></script>
+
+  <video id="live_cam" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto" muted>
+  </video>
+
+  <script>
+
+    var player = videojs('live_cam');
+
+    player.src({
+      src: '/cgi-bin/video.pl',
+      type: 'application/x-mpegURL'
+    });
+    player.loop(true);
+    player.load();
+    player.play();
+
+  </script>
+
+
+  {% include 'ugly/footer.html' %}
+</body>
+
+</html>

@@ -8,6 +8,7 @@ This module http related functionality
 
 from datetime import datetime
 from os.path import join, isfile, isdir, isabs, exists
+from os import listdir,unlink
 import re
 from jsonpickle import decode
 from flask import Flask, request, abort, render_template, Response, Request
@@ -15,9 +16,10 @@ from werkzeug.exceptions import HTTPException
 from core import config, logging, actions
 from core.actions import *
 from core.logging import log_wrapper
+from core.util import cleanup
 from pathlib import Path
-from urllib import parse
 from typing import Dict, Tuple
+
 
 app = Flask(__name__, template_folder=join(config.ROOT, "templates"))
 app.config["CACHE_TYPE"] = "null"
@@ -47,6 +49,7 @@ def parse_routes(file: str) -> Dict:
     obj = decode(content)
     return obj  # type: ignore
 
+
 @app.after_request
 def add_header(response: Response):
     """
@@ -58,6 +61,7 @@ def add_header(response: Response):
             for key, value in route["headers"].items():
                 response.headers[key] = value
     return response
+
 
 @app.errorhandler(404)  # type: ignore
 @app.errorhandler(403)  # type: ignore
@@ -82,9 +86,8 @@ def error_handler(e: HTTPException):
         template_path = f"{code}.html"
     return render_template(template_path), code
 
-def _get_route(
-    routes: Dict, path: str, request: Request
-) -> Tuple[str, Dict ]:
+
+def _get_route(routes: Dict, path: str, request: Request) -> Tuple[str, Dict]:
     """
     From the given routes, find the matching route. When searching, the query string will be appended to look into the route.json keys.
 
@@ -92,7 +95,7 @@ def _get_route(
         route: The routes to search in
         path: The path, as seen as the injected variable in handle_route (leading "/" will be omitted then)
         request: The flask request object
-    
+
     returns:
         Either the selected route or, if no route matches and the root is wanted, the root route ("" key in routes.json)
     """
@@ -109,10 +112,11 @@ def _get_route(
         selected_route = routes[""]
         selected_path = ""
 
-    return (selected_path, selected_route) # type: ignore
+    return (selected_path, selected_route)  # type: ignore
 
-@app.route("/", defaults={"path": ""}, methods=["POST", "GET", "PUT", "DELETE"]) # type: ignore
-@app.route("/<path:path>", methods=["POST", "GET", "PUT", "DELETE"]) # type: ignore
+
+@app.route("/", defaults={"path": ""}, methods=["POST", "GET", "PUT", "DELETE"])  # type: ignore
+@app.route("/<path:path>", methods=["POST", "GET", "PUT", "DELETE"])  # type: ignore
 def handle_route(path):
     """
     Tries to execute a given route based on the path
@@ -121,8 +125,8 @@ def handle_route(path):
     global ROUTES
     global LASTROUTE
     global_request: Request = request
-    
-    selected_path, selected_route = _get_route(ROUTES, path, request) # type: ignore
+
+    selected_path, selected_route = _get_route(ROUTES, path, request)  # type: ignore
 
     log_wrapper(
         logging.EVENT_ID_HTTP_REQUEST,
@@ -137,7 +141,8 @@ def handle_route(path):
         result = actions.run(action, app, selected_path, selected_route, global_request)
         if result is not None and isinstance(result, bool) is False:
             return result
-        
+
+
 def get_string(requestObj) -> str:
     """
     Returns the HTTP GET string out of the given request
@@ -147,6 +152,8 @@ def get_string(requestObj) -> str:
     if get == "":
         return result
     return "?" + get
+
+
 
 def serve():
     """
@@ -159,15 +166,10 @@ def serve():
 
     routesFiles = join(config.ROOT, "templates", str(template), "routes.json")
     ROUTES = parse_routes(routesFiles)
-    log_wrapper(
-        logging.EVENT_ID_STARTED,
-        f"Honeypot started",
-        None,
-        False
-    )
+    log_wrapper(logging.EVENT_ID_STARTED, f"Honeypot started", None, False)
+    cleanup()
     app.run(
         debug=config.get_configuration_value("honeypot", "debug"),
         host=str(config.get_configuration_value("http", "host")),
         port=int(str(config.get_configuration_value("http", "port"))),
     )
-

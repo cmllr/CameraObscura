@@ -1,13 +1,56 @@
 {
-  "index.php":{
+  "video.php": {
     "actions": [
       "sleep",
       "servefile"
     ],
-    "sleep":{
+    "servefile": {
+      "file": "templates/ugly/video.html",
+      "process_template": true
+    },
+    "sleep": {
+      "duration": 0
+    },
+    "headers": {
+      "Server": "lighttpd",
+      "X-Powered-By": "PHP/5.3.7"
+    }
+  },
+  "cgi-bin/video.pl": {
+    "actions": [
+      "video"
+    ],
+    "video": {
+      "video": "ul/video.mp4",
+      "mode": "m3u8"
+    },
+    "headers": {
+      "Content-Type": "application/x-mpegURL",
+      "Server": "lighttpd"
+    }
+  },
+  "cgi-bin/video(.+).ts": {
+    "actions": [
+      "servefile"
+    ],
+    "servefile": {
+      "file": [
+        "ul/video$1.ts"
+      ]
+    },
+    "headers": {
+      "Server": "lighttpd"
+    }
+  },
+  "index.php": {
+    "actions": [
+      "sleep",
+      "servefile"
+    ],
+    "sleep": {
       "duration": 2
     },
-    "servefile":{
+    "servefile": {
       "file": "templates/ugly/index.html",
       "process_template": true
     },
@@ -16,15 +59,15 @@
       "X-Powered-By": "PHP/5.3.7"
     }
   },
-  "":{
+  "": {
     "actions": [
       "sleep",
       "servefile"
     ],
-    "sleep":{
+    "sleep": {
       "duration": 2
     },
-    "servefile":{
+    "servefile": {
       "file": "templates/ugly/index.html",
       "process_template": true
     },
@@ -33,15 +76,15 @@
       "X-Powered-By": "PHP/5.3.7"
     }
   },
-  "login.php":{
+  "login.php": {
     "actions": [
       "sleep",
       "servefile"
     ],
-    "sleep":{
+    "sleep": {
       "duration": 1
     },
-    "servefile":{
+    "servefile": {
       "file": "templates/ugly/login.html",
       "process_template": true
     },
@@ -50,7 +93,7 @@
       "X-Powered-By": "PHP/5.3.7"
     }
   },
-  "admin.php":{
+  "admin.php": {
     "actions": [
       "sleep",
       "authorize",
@@ -63,10 +106,10 @@
       "user_db": "userdb.txt",
       "on_error_process_template": true
     },
-    "sleep":{
+    "sleep": {
       "duration": 2
     },
-    "servefile":{
+    "servefile": {
       "file": "templates/ugly/admin.html",
       "process_template": true
     },
@@ -75,16 +118,16 @@
       "X-Powered-By": "PHP/5.3.7"
     }
   },
-  "update.php":{
+  "update.php": {
     "actions": [
       "sleep",
       "catchfile",
       "servefile"
     ],
-    "sleep":{
+    "sleep": {
       "duration": 5
     },
-    "servefile":{
+    "servefile": {
       "file": "templates/ugly/update.html",
       "process_template": true
     },
@@ -93,11 +136,11 @@
       "X-Powered-By": "PHP/5.3.7"
     }
   },
-  "jquery.min.js":{
+  "jquery.min.js": {
     "actions": [
       "servefile"
     ],
-    "servefile":{
+    "servefile": {
       "file": "templates/ugly/jquery.min.js"
     },
     "headers": {
@@ -109,10 +152,10 @@
       "sleep",
       "servefile"
     ],
-    "sleep":{
+    "sleep": {
       "duration": 1
     },
-    "servefile":{
+    "servefile": {
       "file": [
         "image.jpg"
       ],
@@ -120,7 +163,11 @@
         "x": 5,
         "y": 5,
         "text": "%a, %d %b %Y %H:%M:%S",
-        "color": [255, 255, 255]
+        "color": [
+          255,
+          0,
+          255
+        ]
       }
     },
     "headers": {

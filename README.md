@@ -110,6 +110,32 @@ templates/
       "process_template": true
     }
   },
+  "cgi-bin/video.pl": {
+    "actions": [
+      "video"
+    ],
+    "video": {
+      "video": "ul/video.mp4",
+      "mode": "m3u8"
+    },
+    "headers": {
+      "Content-Type": "application/x-mpegURL",
+      "Server": "lighttpd"
+    }
+  },
+  "cgi-bin/video(.+).ts": {
+    "actions": [
+      "servefile"
+    ],
+    "servefile": {
+      "file": [
+        "ul/video$1.ts"
+      ]
+    },
+    "headers": {
+      "Server": "lighttpd"
+    }
+  }
 }
 ```
 
@@ -135,6 +161,15 @@ sleep _Delay actions_
 
 catchfile _Persists an uploaded file_
 - No further option
+
+video _Streams a video_
+
+> This module requires ffmpeg
+
+- `video`: A video file to stream to
+- `mode`: The video mode to stream to. Currently supported: `m3u8`.  
+          Note: If you stream a video as a m3u8, you need to serve the output files aswell. For example, if your file is `video.mp4`, you
+          need to add a route for `ul/video$1.ts` aswell. See the routes example above for details. 
 
 
 ## Honeypot configuration
@@ -174,7 +209,8 @@ Copy `configuration.cfg.dist` to `configuration.cfg`.
 - [ ] Webhook
   - [x] Discord
 - [ ] Fake other services (like RTSP)
-  - [ ] RTSP 
+  - [ ] Video Stream: RTSP 
+  - [x] Video Stream: M3U8
   - [ ] SSH/ Telnet (using cowrie)
 - [ ] Configuration
   - [x] Company Logos (via config/templates)
@@ -189,6 +225,7 @@ Copy `configuration.cfg.dist` to `configuration.cfg`.
 ## Requirements
 
 Python3
+ffmpeg (for `video` module)
 
 ## Recommendations
 

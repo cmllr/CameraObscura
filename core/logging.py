@@ -22,6 +22,8 @@ EVENT_ID_HTTP_REQUEST = "obscura.http.request"
 EVENT_ID_LOGIN_SUCCESS = "obscura.http.login_success"
 EVENT_ID_LOGIN_FAILED = "obscura.http.login_failed"
 EVENT_ID_UPLOAD = "obscura.http.upload"
+EVENT_ID_FFMPEG_STARTED = "obscura.http.ffmpeg_started"
+EVENT_ID_REMOVED_LOCK = "obscura.http.removed_lock"
 
 GLOBAL_RANDOM_IP_DEBUG_ONLY = None # Debug mode: Use a random ip 
 
