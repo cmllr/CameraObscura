@@ -2,8 +2,9 @@
 # See the LICENSE file for more information
 
 """
-Serves a given file as HTTP response
+Provides video streaming
 """
+
 from datetime import datetime
 from posixpath import join
 from typing import Dict
@@ -15,7 +16,25 @@ from os.path import isfile
 from core.logging import log_wrapper, EVENT_ID_FFMPEG_STARTED
 import subprocess
 from shlex import split
-def run(_: Flask, __: str, route: Dict, request: Request):    
+
+def run(_: Flask, __: str, route: Dict, ___: Request):    
+    """
+    Serve a video stream.
+
+    parameters:
+        route: The route object
+
+    route object:
+        video: The path to the video to stream
+        mode: The mode how the video should be handled
+
+    remarks:
+        if mode is "m3u8", you have to add routes to serve the *.ts files aswell, while the *.m3u8 file has it's own route
+
+    returns:
+        If "video" is missing inside the route config, an exception is thrown
+        If "mode" is missing inside the route config, an exception is thrown
+    """
     if "video" not in route["video"]:
         raise Exception("Video file missing")    
     
